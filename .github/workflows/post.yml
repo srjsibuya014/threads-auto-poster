@@ -1,0 +1,45 @@
+name: Threads Auto Post
+
+on:
+  schedule:
+    # 朝スロット: JST 8:00 = UTC 23:00 (前日)
+    - cron: "0 23 * * *"
+    # 夜スロット: JST 22:00 = UTC 13:00
+    - cron: "0 13 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "テスト実行（実際には投稿しない）"
+        required: false
+        default: "false"
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # posts.json の used フラグ更新のため
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run post script
+        env:
+          THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+        run: python post.py
+
+      - name: Commit updated logs and post status
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/posts.json logs/post_log.json
+          git diff --cached --quiet || git commit -m "chore: update post log [skip ci]"
+          git push
