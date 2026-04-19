@@ -9,9 +9,13 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "テスト実行（実際には投稿しない）"
+        description: "ドライラン（実際には投稿しない）"
         required: false
-        default: "false"
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
 
 jobs:
   post:
@@ -34,6 +38,7 @@ jobs:
       - name: Run post script
         env:
           THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: python post.py
 
       - name: Commit updated logs and post status

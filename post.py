@@ -123,7 +123,12 @@ def write_log(log: list, entry: dict) -> None:
 
 def main():
     now = datetime.now(JST)
-    print(f"[{now.isoformat()}] 投稿処理開始")
+    dry_run = os.environ.get("DRY_RUN", "false").lower() == "true"
+
+    if dry_run:
+        print(f"[{now.isoformat()}] 投稿処理開始（ドライランモード：実際には投稿しません）")
+    else:
+        print(f"[{now.isoformat()}] 投稿処理開始")
 
     config = load_json(CONFIG_PATH)
     posts = load_json(POSTS_PATH)
@@ -166,6 +171,16 @@ def main():
         sys.exit(1)
 
     content = build_content(selected, config)
+
+    if dry_run:
+        print("=" * 50)
+        print("【ドライラン結果】")
+        print(f"投稿タイプ: {post_type}")
+        print(f"投稿ID: {selected['id']}")
+        print(f"投稿内容:\n{content}")
+        print("=" * 50)
+        print("ドライラン完了（実際には投稿していません）")
+        return
 
     try:
         result = post_to_threads(content, config)
