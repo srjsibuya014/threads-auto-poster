@@ -49,11 +49,22 @@ jobs:
       - name: Install dependencies
         run: pip install requests
 
+      - name: Determine post slot
+        if: github.event_name == 'schedule'
+        run: |
+          UTC_HOUR=$(date -u +%H)
+          if [ "$UTC_HOUR" -ge 20 ] || [ "$UTC_HOUR" -le 5 ]; then
+            echo "POST_SLOT=morning" >> $GITHUB_ENV
+          else
+            echo "POST_SLOT=evening" >> $GITHUB_ENV
+          fi
+          echo "UTC hour: $UTC_HOUR → POST_SLOT=$POST_SLOT"
+
       - name: Run post script
         env:
           THREADS_ACCESS_TOKEN: ${{ secrets.THREADS_ACCESS_TOKEN }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
-          POST_SLOT: ${{ github.event.inputs.post_slot || '' }}
+          POST_SLOT: ${{ github.event.inputs.post_slot || env.POST_SLOT || '' }}
         run: python post.py
 
       - name: Commit updated logs and post status
