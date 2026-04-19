@@ -36,33 +36,39 @@ def save_json(path: Path, data: any) -> None:
 
 def determine_post_type(now: datetime, config: dict) -> str:
     """
-    現在時刻・曜日から投稿タイプを決定する
-    - 朝スロット  → 共感型
-    - 夜スロット（金曜）→ 誘導型
-    - 夜スロット（平日）→ 共感型70% / 気づき型30%
+    GitHub Actionsのトリガーイベントから投稿スロットを判定する。
+    スケジュール遅延があっても環境変数 POST_SLOT で明示的に指定できる。
+    - POST_SLOT=morning → 共感型
+    - POST_SLOT=evening → 共感型70% / 気づき型30%（金曜は誘導型）
+    - 未指定の場合は現在時刻で判定（±2時間の余裕を持つ）
     """
-    hour = now.hour
+    slot = os.environ.get("POST_SLOT", "")
     weekday = now.weekday()  # 0=月, 4=金
 
-    morning_start = config["post_schedule"]["morning"]["hour_start"]
-    morning_end = config["post_schedule"]["morning"]["hour_end"]
-    evening_start = config["post_schedule"]["evening"]["hour_start"]
-    evening_end = config["post_schedule"]["evening"]["hour_end"]
+    if not slot:
+        # 時刻で判定（GitHub Actionsの遅延を考慮して±2時間の余裕）
+        hour = now.hour
+        morning_center = (config["post_schedule"]["morning"]["hour_start"] +
+                          config["post_schedule"]["morning"]["hour_end"]) // 2
+        evening_center = (config["post_schedule"]["evening"]["hour_start"] +
+                          config["post_schedule"]["evening"]["hour_end"]) // 2
 
-    if morning_start <= hour < morning_end:
+        morning_dist = min(abs(hour - morning_center), 24 - abs(hour - morning_center))
+        evening_dist = min(abs(hour - evening_center), 24 - abs(hour - evening_center))
+        slot = "morning" if morning_dist <= evening_dist else "evening"
+        print(f"POST_SLOT未指定のため時刻({now.strftime('%H:%M')} JST)から判定: {slot}")
+
+    if slot == "morning":
         return "共感型"
 
-    if evening_start <= hour < evening_end:
-        if weekday == 4:  # 金曜
-            return "誘導型"
-        ratio = config["evening_type_ratio"]
-        return random.choices(
-            ["共感型", "気づき型"],
-            weights=[ratio["共感型"], ratio["気づき型"]],
-        )[0]
-
-    # スケジュール外（GitHub Actions の設定ミス等）
-    raise RuntimeError(f"投稿スロット外の時刻です: {now.strftime('%H:%M')} JST")
+    # evening
+    if weekday == 4:  # 金曜
+        return "誘導型"
+    ratio = config["evening_type_ratio"]
+    return random.choices(
+        ["共感型", "気づき型"],
+        weights=[ratio["共感型"], ratio["気づき型"]],
+    )[0]
 
 
 def select_post(posts: list, post_type: str) -> dict | None:
