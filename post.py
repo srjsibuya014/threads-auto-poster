@@ -75,7 +75,7 @@ def select_post(posts: list, post_type: str) -> dict | None:
 
 def build_content(post: dict, config: dict) -> str:
     """誘導型の場合に {note_url} を実際の URL に置換する"""
-    return post["content"].replace("{note_url}", config["note_url"])
+    return post["threads"].replace("{note_url}", config["note_url"])
 
 
 def post_to_threads(content: str, config: dict) -> dict:

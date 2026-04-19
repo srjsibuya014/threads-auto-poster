@@ -74,7 +74,7 @@ def run_all_checks(post: dict, config: dict) -> Tuple[bool, list]:
     Returns: (passed, error_messages)
     """
     errors = []
-    content = post["content"]
+    content = post["threads"]
     post_type = post["type"]
     min_lines = config["quality_check"]["min_lines"]
     max_lines = config["quality_check"]["max_lines"]

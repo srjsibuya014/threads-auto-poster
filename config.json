@@ -1,7 +1,7 @@
 {
   "phase": 1,
   "note_url": "https://note.com/YOUR_USERNAME/n/YOUR_NOTE_ID",
-  "threads_user_id": "YOUR_THREADS_USER_ID",
+  "threads_user_id": "26341108545551537",
   "post_schedule": {
     "morning": { "hour_start": 7, "hour_end": 9 },
     "evening": { "hour_start": 21, "hour_end": 23 }
@@ -12,7 +12,7 @@
   },
   "quality_check": {
     "min_lines": 10,
-    "max_lines": 15,
+    "max_lines": 16,
     "max_retries": 3
   }
 }
